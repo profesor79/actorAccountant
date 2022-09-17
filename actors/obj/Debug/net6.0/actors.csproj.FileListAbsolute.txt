@@ -1,0 +1,12 @@
+C:\code\actorAccountant\actors\bin\Debug\net6.0\actors.deps.json
+C:\code\actorAccountant\actors\bin\Debug\net6.0\actors.dll
+C:\code\actorAccountant\actors\bin\Debug\net6.0\actors.pdb
+C:\code\actorAccountant\actors\obj\Debug\net6.0\actors.csproj.AssemblyReference.cache
+C:\code\actorAccountant\actors\obj\Debug\net6.0\actors.GeneratedMSBuildEditorConfig.editorconfig
+C:\code\actorAccountant\actors\obj\Debug\net6.0\actors.AssemblyInfoInputs.cache
+C:\code\actorAccountant\actors\obj\Debug\net6.0\actors.AssemblyInfo.cs
+C:\code\actorAccountant\actors\obj\Debug\net6.0\actors.csproj.CoreCompileInputs.cache
+C:\code\actorAccountant\actors\obj\Debug\net6.0\actors.dll
+C:\code\actorAccountant\actors\obj\Debug\net6.0\refint\actors.dll
+C:\code\actorAccountant\actors\obj\Debug\net6.0\actors.pdb
+C:\code\actorAccountant\actors\obj\Debug\net6.0\ref\actors.dll

@@ -2545,6 +2545,22 @@
         "build": {
           "build/netcoreapp2.1/xunit.runner.visualstudio.props": {}
         }
+      },
+      "actors/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v6.0",
+        "dependencies": {
+          "Akka": "1.4.41",
+          "Akka.Persistence": "1.4.41",
+          "Akka.Persistence.Sql.Common": "1.4.41",
+          "Akka.Persistence.SqlServer": "1.4.35"
+        },
+        "compile": {
+          "bin/placeholder/actors.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/actors.dll": {}
+        }
       }
     }
   },
@@ -8052,6 +8068,11 @@
         "xunit.runner.visualstudio.2.4.3.nupkg.sha512",
         "xunit.runner.visualstudio.nuspec"
       ]
+    },
+    "actors/1.0.0": {
+      "type": "project",
+      "path": "../actors/actors.csproj",
+      "msbuildProject": "../actors/actors.csproj"
     }
   },
   "projectFileDependencyGroups": {
@@ -8066,6 +8087,7 @@
       "Akka.TestKit >= 1.4.41",
       "Akka.TestKit.Xunit2 >= 1.4.41",
       "Microsoft.NET.Test.Sdk >= 17.1.0",
+      "actors >= 1.0.0",
       "coverlet.collector >= 3.1.2",
       "xunit >= 2.4.1",
       "xunit.runner.visualstudio >= 2.4.3"
@@ -8098,7 +8120,11 @@
       "frameworks": {
         "net6.0": {
           "targetAlias": "net6.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "C:\\code\\actorAccountant\\actors\\actors.csproj": {
+              "projectPath": "C:\\code\\actorAccountant\\actors\\actors.csproj"
+            }
+          }
         }
       },
       "warningProperties": {
