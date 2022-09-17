@@ -8,11 +8,27 @@ public class AccountantActor:ReceiveActor
 	public AccountantActor()
 	{
 		Receive<GetBalanceMessage>(SendCurrentBalance);
+		Receive<IncomingTransferMessage>(AddToBalance);
+		Receive<WithdrawAmountMessage>(RemoveFromBalance);
 	}
+
+	private void RemoveFromBalance(WithdrawAmountMessage m)
+	{
+		if (_balance - m.Amount < 0) {
+			Sender.Tell(new NoAvaliableBalanceOnAcconutMessage());
+			return;
+		}
+
+        _balance -= m.Amount;
+    }
+
+	private void AddToBalance(IncomingTransferMessage m)
+	{
+        _balance += m.Amount;
+    }
 
 	private void SendCurrentBalance(GetBalanceMessage m)
 	{
-		Console.WriteLine($"sending balance: {_balance}");
 		Sender.Tell(new CurrentBalanceMessage(_balance));	
 	}
 
@@ -29,5 +45,32 @@ public class AccountantActor:ReceiveActor
 		{
 			Balance = balance;
 		}
+	}
+
+	public class IncomingTransferMessage
+	{
+        
+
+		public IncomingTransferMessage(decimal amount)
+		{
+			Amount = amount;
+		}
+
+		public decimal Amount { get; }
+	}
+
+	public class WithdrawAmountMessage
+	{
+
+		public WithdrawAmountMessage(decimal amount)
+		{
+			Amount = amount;
+		}
+
+		public decimal Amount { get; }
+	}
+
+	public class NoAvaliableBalanceOnAcconutMessage
+	{
 	}
 }
