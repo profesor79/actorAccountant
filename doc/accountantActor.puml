@@ -1,0 +1,37 @@
+@startuml
+
+title How we can transfer money
+autonumber 
+
+requestor -> account: give me 400
+account --> account: deduct 400
+account -> requestor: success
+
+alt not enough balance 
+    account --> account: not enough balance
+    account -> requestor: error
+end alt
+
+newpage
+
+autonumber 
+
+requestor -> account: give me 400 \n in 2 days
+note left
+ How we can transfer money 
+ with a lock on scheduled time
+end note
+
+account --> account: deduct 400
+account --> account: lock:\nin deposit 400
+account --> delayedTransfer: transfer in 2 days
+account -> requestor: scheduled
+delayedTransfer-->account: execute transfer
+note left
+ We got details on time of the transfer
+end note
+account --> account: lock\nget from deposit 400
+account -> requestor: success
+
+
+@enduml

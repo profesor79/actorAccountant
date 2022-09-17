@@ -85,9 +85,6 @@ public class AccountantActorTests:ActorTestBase
         ExpectMsg<AccountantActor.CurrentBalanceMessage>(m => {
             Assert.Equal(2*amount, m.Balance);
         });
-
-
-
     }
 
 }
