@@ -4,22 +4,46 @@ namespace actors;
 public class AccountantActor:ReceiveActor
 {
 
-	List<DelayedtTrasferNoLockMessage> _delayedtTrasferNoLockMessages = new List<DelayedtTrasferNoLockMessage>();
+    Dictionary<Guid, DelayedtTrasferNoLockMessage> _delayedtTrasferNoLock = new Dictionary<Guid, DelayedtTrasferNoLockMessage>();
 	decimal _balance = 0;
 	private readonly IActorRef _schedulerActor;
 
+	
+
 	public AccountantActor(IActorRef schedulerActor)
 	{
-		Receive<GetBalanceMessage>(SendCurrentBalance);
+        _schedulerActor = schedulerActor;
+
+        Receive<GetBalanceMessage>(SendCurrentBalance);
 		Receive<IncomingTransferMessage>(AddToBalance);
 		Receive<WithdrawAmountMessage>(RemoveFromBalance);
 		Receive<DelayedtTrasferNoLockMessage>(ScheduleDelayedNoLock);
-		_schedulerActor = schedulerActor;
+		Receive<ScheduledNoLockTransferToExecuteMessage>(ExecuteScheduledNoLock);
+		
 	}
+
+	private void ExecuteScheduledNoLock(ScheduledNoLockTransferToExecuteMessage m)
+	{
+		if (_delayedtTrasferNoLock.ContainsKey(m.TransferId)){
+			var transferDetails = _delayedtTrasferNoLock[m.TransferId];
+            
+			//removind transfer details
+			_delayedtTrasferNoLock.Remove(m.TransferId);
+
+            // withdraw
+            if (_balance - transferDetails.Amount < 0)
+            {
+                Sender.Tell(new NoAvaliableBalanceOnAcconutMessage());
+                return;
+            }
+
+            _balance -= transferDetails.Amount;		
+        }        
+    }
 
 	private void ScheduleDelayedNoLock(DelayedtTrasferNoLockMessage m)
 	{
-		_delayedtTrasferNoLockMessages.Add(m);
+		_delayedtTrasferNoLock.Add(m.TransferId,  m);
 		_schedulerActor.Tell(m);
 		Sender.Tell(new DelayedtTrasferNoLockScheduledMessage());
 	}
@@ -89,18 +113,30 @@ public class AccountantActor:ReceiveActor
 	public class DelayedtTrasferNoLockMessage
 	{
 		
-		public DelayedtTrasferNoLockMessage(decimal amount, TimeSpan timeSpan)
+		public DelayedtTrasferNoLockMessage(decimal amount, TimeSpan timeSpan, Guid transferId)
 		{
 			Amount = amount;
 			TimeSpan = timeSpan;
+			TransferId = transferId;
 		}
 
 		public decimal Amount { get; }
 		public TimeSpan TimeSpan { get; }
-		public Guid Id { get; set; } = Guid.NewGuid();	
+		public Guid TransferId { get; }		
 	}
 
 	public class DelayedtTrasferNoLockScheduledMessage
 	{
+	}
+
+	public class ScheduledNoLockTransferToExecuteMessage
+	{
+
+		public ScheduledNoLockTransferToExecuteMessage(Guid transferId)
+		{
+			TransferId = transferId;
+		}
+
+		public Guid TransferId { get; }
 	}
 }

@@ -7,7 +7,7 @@ namespace actor.tests;
 
 public class AccountantActorTests:ActorTestBase
 {
-    
+    Guid _transferId = Guid.NewGuid();
     [Fact]
     public void T001GetZeroBalance()
     {
@@ -16,10 +16,10 @@ public class AccountantActorTests:ActorTestBase
         _sut = Sys.ActorOf(props);
 
         // when we ask for a balance        
-        _sut.Tell(new AccountantActor.GetBalanceMessage());
+        _sut.Tell(new GetBalanceMessage());
 
         //then balance message shall be received
-        ExpectMsg<AccountantActor.CurrentBalanceMessage>(m => {
+        ExpectMsg<CurrentBalanceMessage>(m => {
             Assert.Equal(0, m.Balance);
         });
     }
@@ -34,11 +34,11 @@ public class AccountantActorTests:ActorTestBase
         T001GetZeroBalance();
 
         // when we send a 100 and ask for a balance
-        _sut.Tell(new AccountantActor.IncomingTransferMessage(amount));
-        _sut.Tell(new AccountantActor.GetBalanceMessage());
+        _sut.Tell(new IncomingTransferMessage(amount));
+        _sut.Tell(new GetBalanceMessage());
 
         // then balance shall be given
-        ExpectMsg<AccountantActor.CurrentBalanceMessage>(m => {
+        ExpectMsg<CurrentBalanceMessage>(m => {
             Assert.Equal(amount, m.Balance);
         });
     }
@@ -54,11 +54,11 @@ public class AccountantActorTests:ActorTestBase
         T002HandleIncomingTransfer();
 
         // when we ask for a withdrawal, then accout balance shall be deducted
-        _sut.Tell(new AccountantActor.WithdrawAmountMessage(amount));
-        _sut.Tell(new AccountantActor.GetBalanceMessage());
+        _sut.Tell(new WithdrawAmountMessage(amount));
+        _sut.Tell(new GetBalanceMessage());
 
         // then balance shall be given
-        ExpectMsg<AccountantActor.CurrentBalanceMessage>(m => {
+        ExpectMsg<CurrentBalanceMessage>(m => {
             Assert.Equal(amount, m.Balance);
         });
 
@@ -75,17 +75,12 @@ public class AccountantActorTests:ActorTestBase
         T002HandleIncomingTransfer();
 
         // when we ask for a withdrawal, then accout balance shall be deducted
-        _sut.Tell(new AccountantActor.WithdrawAmountMessage(3*amount));
+        _sut.Tell(new WithdrawAmountMessage(3*amount));
 
 
         // then we shall receive no Avaliable Balace and balence shall be 100
-        ExpectMsg<AccountantActor.NoAvaliableBalanceOnAcconutMessage>();
-        
-        _sut.Tell(new AccountantActor.GetBalanceMessage());
-               
-        ExpectMsg<AccountantActor.CurrentBalanceMessage>(m => {
-            Assert.Equal(2*amount, m.Balance);
-        });
+        ExpectMsg<NoAvaliableBalanceOnAcconutMessage>();
+        CheckBalance(2 * amount);
     }
 
     [Fact]
@@ -95,18 +90,58 @@ public class AccountantActorTests:ActorTestBase
         var props = Props.Create(() => new AccountantActor(_testProbe));
         _sut = Sys.ActorOf(props);
         decimal amount = 400;
-        _sut.Tell(new AccountantActor.IncomingTransferMessage(amount));
+        _sut.Tell(new IncomingTransferMessage(amount));
 
         //when we request a transfer the balance shall be same
-        _sut.Tell(new AccountantActor.DelayedtTrasferNoLockMessage(amount, TimeSpan.FromMinutes(20)));
+        _sut.Tell(new DelayedtTrasferNoLockMessage(amount, TimeSpan.FromMinutes(20), _transferId));
 
-        //then receive scheduled message
-        _testProbe.ExpectMsg<AccountantActor.DelayedtTrasferNoLockMessage>(m => {
+        //then receive scheduled message in child actor and confirmation for sender
+        _testProbe.ExpectMsg<DelayedtTrasferNoLockMessage>(m => {
             Assert.Equal(amount, m.Amount);
         });
 
-        ExpectMsg<AccountantActor.DelayedtTrasferNoLockScheduledMessage>();
+        ExpectMsg<DelayedtTrasferNoLockScheduledMessage>();
+
+        CheckBalance(amount);
     }
 
+
+    private void CheckBalance(decimal amount) {
+
+        // check balance
+        _sut.Tell(new GetBalanceMessage());
+
+        ExpectMsg<CurrentBalanceMessage>(m => {
+            Assert.Equal(amount, m.Balance);
+        });
+    }
+
+    [Fact]
+    public void T006ExecuteDelayedRequestWitoutLock()
+    {
+        // given a state with a scheduled no lock transfer
+        T005SendDelayedRequestWitoutLock();
+
+        // when we send a  request to proceed with delayed transfer 
+        _sut.Tell(new ScheduledNoLockTransferToExecuteMessage(_transferId));
+
+        // then balance shall be 0 
+        CheckBalance(0);
+    }
+
+
+
+    [Fact]
+    public void T007ExecuteDelayedRequestWitoutLockWhenNotEnoughBalance()
+    {
+        // given a state with a scheduled no lock transfer
+        T005SendDelayedRequestWitoutLock();
+
+        // when we send a  request to proceed with delayed transfer 
+        _sut.Tell(new ScheduledNoLockTransferToExecuteMessage(_transferId));
+
+        // then balance shall be 0 
+        CheckBalance(0);
+    }
 
 }
