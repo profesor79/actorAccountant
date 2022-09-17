@@ -1,6 +1,7 @@
 using actors;
 using Akka.Actor;
 using Akka.TestKit.Xunit2;
+using static actors.AccountantActor;
 
 namespace actor.tests;
 
@@ -11,7 +12,7 @@ public class AccountantActorTests:ActorTestBase
     public void T001GetZeroBalance()
     {
         //given accountant actor
-        var props = Props.Create(() => new AccountantActor());
+        var props = Props.Create(() => new AccountantActor(_testProbe));
         _sut = Sys.ActorOf(props);
 
         // when we ask for a balance        
@@ -86,5 +87,26 @@ public class AccountantActorTests:ActorTestBase
             Assert.Equal(2*amount, m.Balance);
         });
     }
+
+    [Fact]
+    public void T005SendDelayedRequestWitoutLock()
+    {
+        // given account actour with enough balance
+        var props = Props.Create(() => new AccountantActor(_testProbe));
+        _sut = Sys.ActorOf(props);
+        decimal amount = 400;
+        _sut.Tell(new AccountantActor.IncomingTransferMessage(amount));
+
+        //when we request a transfer the balance shall be same
+        _sut.Tell(new AccountantActor.DelayedtTrasferNoLockMessage(amount, TimeSpan.FromMinutes(20)));
+
+        //then receive scheduled message
+        _testProbe.ExpectMsg<AccountantActor.DelayedtTrasferNoLockMessage>(m => {
+            Assert.Equal(amount, m.Amount);
+        });
+
+        ExpectMsg<AccountantActor.DelayedtTrasferNoLockScheduledMessage>();
+    }
+
 
 }

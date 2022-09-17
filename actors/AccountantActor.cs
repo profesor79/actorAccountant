@@ -4,12 +4,24 @@ namespace actors;
 public class AccountantActor:ReceiveActor
 {
 
+	List<DelayedtTrasferNoLockMessage> _delayedtTrasferNoLockMessages = new List<DelayedtTrasferNoLockMessage>();
 	decimal _balance = 0;
-	public AccountantActor()
+	private readonly IActorRef _schedulerActor;
+
+	public AccountantActor(IActorRef schedulerActor)
 	{
 		Receive<GetBalanceMessage>(SendCurrentBalance);
 		Receive<IncomingTransferMessage>(AddToBalance);
 		Receive<WithdrawAmountMessage>(RemoveFromBalance);
+		Receive<DelayedtTrasferNoLockMessage>(ScheduleDelayedNoLock);
+		_schedulerActor = schedulerActor;
+	}
+
+	private void ScheduleDelayedNoLock(DelayedtTrasferNoLockMessage m)
+	{
+		_delayedtTrasferNoLockMessages.Add(m);
+		_schedulerActor.Tell(m);
+		Sender.Tell(new DelayedtTrasferNoLockScheduledMessage());
 	}
 
 	private void RemoveFromBalance(WithdrawAmountMessage m)
@@ -71,6 +83,24 @@ public class AccountantActor:ReceiveActor
 	}
 
 	public class NoAvaliableBalanceOnAcconutMessage
+	{
+	}
+
+	public class DelayedtTrasferNoLockMessage
+	{
+		
+		public DelayedtTrasferNoLockMessage(decimal amount, TimeSpan timeSpan)
+		{
+			Amount = amount;
+			TimeSpan = timeSpan;
+		}
+
+		public decimal Amount { get; }
+		public TimeSpan TimeSpan { get; }
+		public Guid Id { get; set; } = Guid.NewGuid();	
+	}
+
+	public class DelayedtTrasferNoLockScheduledMessage
 	{
 	}
 }
