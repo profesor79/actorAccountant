@@ -12,7 +12,7 @@ public class AccountantActorTests:ActorTestBase
     public void T001GetZeroBalance()
     {
         //given accountant actor
-        var props = Props.Create(() => new AccountantActor(_testProbe));
+        var props = Props.Create(() => new AccountantActor());
         _sut = Sys.ActorOf(props);
 
         // when we ask for a balance        
@@ -68,10 +68,10 @@ public class AccountantActorTests:ActorTestBase
     [Fact]
     public void T004PreventFromGoingInDebt()
     {
-        // objecitve: when we send a 100 then and request a 150 no we shall not proceed
+        // objecitve: when we send a 100 then and request of 150 shall not proceed
         decimal amount = 50;
 
-        // given an actor with given balance
+        // given an actor with given balance of 100
         T002HandleIncomingTransfer();
 
         // when we ask for a withdrawal, then accout balance shall be deducted
@@ -83,28 +83,7 @@ public class AccountantActorTests:ActorTestBase
         CheckBalance(2 * amount);
     }
 
-    [Fact]
-    public void T005SendDelayedRequestWitoutLock()
-    {
-        // given account actour with enough balance
-        var props = Props.Create(() => new AccountantActor(_testProbe));
-        _sut = Sys.ActorOf(props);
-        decimal amount = 400;
-        _sut.Tell(new IncomingTransferMessage(amount));
-
-        //when we request a transfer the balance shall be same
-        _sut.Tell(new DelayedtTrasferNoLockMessage(amount, TimeSpan.FromMinutes(20), _transferId));
-
-        //then receive scheduled message in child actor and confirmation for sender
-        _testProbe.ExpectMsg<DelayedtTrasferNoLockMessage>(m => {
-            Assert.Equal(amount, m.Amount);
-        });
-
-        ExpectMsg<DelayedtTrasferNoLockScheduledMessage>();
-
-        CheckBalance(amount);
-    }
-
+   
 
     private void CheckBalance(decimal amount) {
 
@@ -116,32 +95,9 @@ public class AccountantActorTests:ActorTestBase
         });
     }
 
-    [Fact]
-    public void T006ExecuteDelayedRequestWitoutLock()
-    {
-        // given a state with a scheduled no lock transfer
-        T005SendDelayedRequestWitoutLock();
-
-        // when we send a  request to proceed with delayed transfer 
-        _sut.Tell(new ScheduledNoLockTransferToExecuteMessage(_transferId));
-
-        // then balance shall be 0 
-        CheckBalance(0);
-    }
+ 
 
 
-
-    [Fact]
-    public void T007ExecuteDelayedRequestWitoutLockWhenNotEnoughBalance()
-    {
-        // given a state with a scheduled no lock transfer
-        T005SendDelayedRequestWitoutLock();
-
-        // when we send a  request to proceed with delayed transfer 
-        _sut.Tell(new ScheduledNoLockTransferToExecuteMessage(_transferId));
-
-        // then balance shall be 0 
-        CheckBalance(0);
-    }
+ 
 
 }
